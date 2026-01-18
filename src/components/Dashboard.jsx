@@ -62,7 +62,7 @@ export default function Dashboard({ items }) {
           <div className="stat-content">
             <div className="stat-label">Low Stock</div>
             <div className="stat-value">{stats.lowStockCount}</div>
-            <div className="stat-subtext">Items < 5 units</div>
+              <div className="stat-subtext">Items &lt; 5 units</div>
           </div>
         </div>
 
