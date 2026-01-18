@@ -1,7 +1,9 @@
-import React from 'react'
-import { Edit2, Trash2, MapPin, Tag } from 'lucide-react'
+import React, { useState } from 'react'
+import { Edit2, Trash2, MapPin, Tag, Barcode } from 'lucide-react'
+import BarcodeGenerator from './BarcodeGenerator'
 
 export default function InventoryList({ items, onEdit, onDelete, loading }) {
+  const [barcodeItem, setBarcodeItem] = useState(null)
   if (loading) {
     return <div className="loading">Loading inventory...</div>
   }
@@ -36,6 +38,12 @@ export default function InventoryList({ items, onEdit, onDelete, loading }) {
           <div className="inventory-grid">
             {categoryItems.map((item) => (
               <div key={item.id} className="inventory-card">
+                {item.image && (
+                  <div className="card-image">
+                    <img src={item.image} alt={item.name} />
+                  </div>
+                )}
+                
                 <div className="card-header">
                   <div>
                     <h3>{item.name}</h3>
@@ -78,6 +86,13 @@ export default function InventoryList({ items, onEdit, onDelete, loading }) {
                     <Edit2 size={16} /> Edit
                   </button>
                   <button 
+                    onClick={() => setBarcodeItem(item)} 
+                    className="btn btn-small btn-secondary"
+                    title="Generate barcode"
+                  >
+                    <Barcode size={16} /> Barcode
+                  </button>
+                  <button 
                     onClick={() => onDelete(item.id)} 
                     className="btn btn-small btn-danger"
                   >
@@ -89,6 +104,13 @@ export default function InventoryList({ items, onEdit, onDelete, loading }) {
           </div>
         </div>
       ))}
+
+      {barcodeItem && (
+        <BarcodeGenerator 
+          item={barcodeItem} 
+          onClose={() => setBarcodeItem(null)}
+        />
+      )}
     </div>
   )
 }

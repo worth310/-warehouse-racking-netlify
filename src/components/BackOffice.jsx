@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Edit2, Trash2, Plus, Search } from 'lucide-react'
+import { Edit2, Trash2, Plus, Search, Download } from 'lucide-react'
 
 export default function BackOffice({ items, onEdit, onDelete, onAddNew, onClose }) {
   const [searchQuery, setSearchQuery] = useState('')
@@ -29,6 +29,35 @@ export default function BackOffice({ items, onEdit, onDelete, onAddNew, onClose 
     return 0
   })
 
+  // Export to CSV
+  const exportToCSV = () => {
+    const headers = ['Item Name', 'SKU', 'Quantity', 'Category', 'Subcategory', 'Location', 'Description', 'Date Added']
+    const rows = sortedItems.map(item => [
+      item.name,
+      item.sku,
+      item.quantity,
+      item.category || '',
+      item.subcategory || '',
+      item.location || '',
+      item.description || '',
+      item.createdAt ? new Date(item.createdAt).toLocaleDateString() : ''
+    ])
+
+    let csvContent = headers.join(',') + '\n'
+    rows.forEach(row => {
+      const escapedRow = row.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`)
+      csvContent += escapedRow.join(',') + '\n'
+    })
+
+    const element = document.createElement('a')
+    element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent))
+    element.setAttribute('download', `oxford-warehouse-${new Date().toISOString().split('T')[0]}.csv`)
+    element.style.display = 'none'
+    document.body.appendChild(element)
+    element.click()
+    document.body.removeChild(element)
+  }
+
   return (
     <div className="backoffice">
       <div className="backoffice-header">
@@ -36,7 +65,12 @@ export default function BackOffice({ items, onEdit, onDelete, onAddNew, onClose 
           <h2>Back Office - Inventory Management</h2>
           <p>{sortedItems.length} items</p>
         </div>
-        <button onClick={onClose} className="btn btn-secondary">Close</button>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <button onClick={exportToCSV} className="btn btn-secondary" title="Export to CSV">
+            <Download size={18} /> Export CSV
+          </button>
+          <button onClick={onClose} className="btn btn-secondary">Close</button>
+        </div>
       </div>
 
       <div className="backoffice-controls">

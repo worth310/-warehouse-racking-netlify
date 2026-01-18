@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { X } from 'lucide-react'
+import { X, Upload } from 'lucide-react'
 
 const CATEGORIES = {
   'Electronics': ['Computers', 'Servers', 'Networking', 'Accessories'],
@@ -20,11 +20,13 @@ export default function ItemForm({ item, onSubmit, onCancel }) {
     description: '',
     category: '',
     subcategory: '',
+    image: null,
     ...item
   })
 
   const [errors, setErrors] = useState({})
   const [selectedCategory, setSelectedCategory] = useState(item?.category || '')
+  const [imagePreview, setImagePreview] = useState(item?.image || null)
 
   const validate = () => {
     const newErrors = {}
@@ -50,6 +52,21 @@ export default function ItemForm({ item, onSubmit, onCancel }) {
       ...prev,
       [name]: name === 'quantity' ? parseInt(value) || 0 : value
     }))
+  }
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setFormData(prev => ({
+          ...prev,
+          image: reader.result
+        }))
+        setImagePreview(reader.result)
+      }
+      reader.readAsDataURL(file)
+    }
   }
 
   const handleCategoryChange = (e) => {
@@ -171,6 +188,40 @@ export default function ItemForm({ item, onSubmit, onCancel }) {
               placeholder="Additional notes..."
               rows="3"
             />
+          </div>
+
+          <div className="form-group">
+            <label>Item Image</label>
+            <div className="image-upload-container">
+              {imagePreview ? (
+                <div className="image-preview">
+                  <img src={imagePreview} alt="Item preview" />
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      setImagePreview(null)
+                      setFormData(prev => ({ ...prev, image: null }))
+                    }}
+                    className="btn btn-small"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <label htmlFor="image" className="image-upload-label">
+                  <Upload size={24} />
+                  <span>Click to upload item image</span>
+                  <small>PNG, JPG (max 5MB)</small>
+                </label>
+              )}
+              <input
+                id="image"
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                style={{ display: 'none' }}
+              />
+            </div>
           </div>
 
           <div className="form-actions">

@@ -1133,3 +1133,148 @@ body.dark-mode {
   background: rgba(255, 255, 255, 0.25);
   transform: scale(1.05);
 }
+
+/* Image Upload Styles */
+.image-upload-container {
+  padding: 1.5rem;
+  border: 2px dashed var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-color);
+  text-align: center;
+}
+
+.image-upload-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.image-upload-label:hover {
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.image-upload-label small {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.image-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.image-preview img {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  object-fit: cover;
+}
+
+/* Inventory Card Image */
+.card-image {
+  width: 100%;
+  height: 150px;
+  overflow: hidden;
+  border-radius: 8px 8px 0 0;
+  background: var(--bg-color);
+}
+
+.card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Barcode Modal */
+.barcode-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+}
+
+.barcode-modal {
+  background: var(--card-bg);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  max-width: 500px;
+  width: 90%;
+  overflow: auto;
+  max-height: 90vh;
+}
+
+.barcode-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.barcode-content {
+  padding: 1.5rem;
+}
+
+.item-details {
+  margin-bottom: 1.5rem;
+}
+
+.item-details h3 {
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.item-details p {
+  margin: 0.5rem 0;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.item-details .sku,
+.item-details .qty {
+  background: var(--bg-color);
+  padding: 0.75rem;
+  border-radius: 6px;
+}
+
+.barcode-display {
+  text-align: center;
+  padding: 1.5rem;
+  background: var(--bg-color);
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.barcode-display canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+.barcode-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.barcode-actions .btn {
+  flex: 1;
+  max-width: 200px;
+}
+
+
+
