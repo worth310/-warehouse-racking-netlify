@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, Settings, Moon, Sun, BarChart3 } from 'lucide-react'
+import { Plus, Settings, Moon, Sun, BarChart3, Cloud, CloudOff } from 'lucide-react'
 import Scanner from './components/Scanner'
 import SearchItems from './components/SearchItems'
 import InventoryList from './components/InventoryList'
@@ -8,6 +8,7 @@ import BackOffice from './components/BackOffice'
 import Dashboard from './components/Dashboard'
 import ActivityLog from './components/ActivityLog'
 import Login from './components/Login'
+import { dataService } from './services/dataService'
 import './App.css'
 
 export default function App() {
@@ -23,6 +24,8 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('')
   const [darkMode, setDarkMode] = useState(false)
   const [activityLog, setActivityLog] = useState([])
+  const [cloudConnected, setCloudConnected] = useState(false)
+  const [unsubscribe, setUnsubscribe] = useState(null)
 
   // Load items from localStorage (demo mode)
   useEffect(() => {
@@ -36,6 +39,39 @@ export default function App() {
       setActivityLog(JSON.parse(savedLog))
     }
   }, [])
+
+  // Load items from cloud when user logs in
+  useEffect(() => {
+    if (currentUser) {
+      const loadCloudItems = async () => {
+        try {
+          const cloudItems = await dataService.loadItems(currentUser.id)
+          if (cloudItems && cloudItems.length > 0) {
+            setItems(cloudItems)
+            setFilteredItems(cloudItems)
+            setCloudConnected(true)
+            
+            // Subscribe to real-time updates
+            const unsubFunc = dataService.subscribeToItems(currentUser.id, (updatedItems) => {
+              setItems(updatedItems)
+              setFilteredItems(updatedItems)
+            })
+            setUnsubscribe(() => unsubFunc)
+          }
+        } catch (error) {
+          console.error("Failed to load cloud items:", error)
+          setCloudConnected(false)
+        }
+      }
+      loadCloudItems()
+    }
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe()
+      }
+    }
+  }, [currentUser])
 
   // Save items to localStorage
   useEffect(() => {
@@ -137,14 +173,23 @@ export default function App() {
     setFilteredItems(results)
   }
 
-  const handleAddItem = (formData) => {
+  const handleAddItem = async (formData) => {
     let updatedItems
     if (editingItem) {
       updatedItems = items.map(item => item.id === editingItem.id ? { ...formData, id: item.id, createdAt: item.createdAt } : item)
       logActivity('edit', formData.name, formData)
+      // Update in cloud
+      if (cloudConnected && currentUser) {
+        await dataService.updateItem(currentUser.id, editingItem.id, formData)
+      }
     } else {
-      updatedItems = [...items, { ...formData, id: Date.now(), createdAt: new Date().toISOString() }]
+      const newItem = { ...formData, id: Date.now(), createdAt: new Date().toISOString() }
+      updatedItems = [...items, newItem]
       logActivity('add', formData.name, formData)
+      // Save to cloud
+      if (cloudConnected && currentUser) {
+        await dataService.addItem(currentUser.id, newItem)
+      }
     }
     setItems(updatedItems)
     setFilteredItems(updatedItems)
@@ -158,7 +203,7 @@ export default function App() {
     setShowForm(true)
   }
 
-  const handleDeleteItem = (id) => {
+  const handleDeleteItem = async (id) => {
     if (confirm('Are you sure you want to delete this item?')) {
       const deletedItem = items.find(item => item.id === id)
       const updatedItems = items.filter(item => item.id !== id)
@@ -166,6 +211,10 @@ export default function App() {
       setFilteredItems(updatedItems)
       if (deletedItem) {
         logActivity('delete', deletedItem.name, { sku: deletedItem.sku })
+      }
+      // Delete from cloud
+      if (cloudConnected && currentUser) {
+        await dataService.deleteItem(currentUser.id, id)
       }
     }
   }
@@ -182,6 +231,15 @@ export default function App() {
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span style={{ color: 'white', fontWeight: 600, fontSize: '0.9rem' }}>👤 {currentUser.username}</span>
+                {cloudConnected && (
+                  <button 
+                    className="btn btn-header"
+                    title="Cloud sync active - data syncs across devices"
+                    style={{ background: 'rgba(46, 125, 50, 0.3)' }}
+                  >
+                    <Cloud size={18} style={{ color: '#4caf50' }} />
+                  </button>
+                )}
               </div>
               <button 
                 onClick={() => setShowDashboard(!showDashboard)}
