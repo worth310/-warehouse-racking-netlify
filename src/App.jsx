@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, Settings } from 'lucide-react'
+import { Plus, Settings, Moon, Sun, BarChart3 } from 'lucide-react'
 import Scanner from './components/Scanner'
 import SearchItems from './components/SearchItems'
 import InventoryList from './components/InventoryList'
 import ItemForm from './components/ItemForm'
 import BackOffice from './components/BackOffice'
+import Dashboard from './components/Dashboard'
+import ActivityLog from './components/ActivityLog'
 import './App.css'
 
 export default function App() {
@@ -12,16 +14,24 @@ export default function App() {
   const [filteredItems, setFilteredItems] = useState([])
   const [showForm, setShowForm] = useState(false)
   const [showBackOffice, setShowBackOffice] = useState(false)
+  const [showDashboard, setShowDashboard] = useState(false)
+  const [showActivityLog, setShowActivityLog] = useState(false)
   const [editingItem, setEditingItem] = useState(null)
   const [loading, setLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [darkMode, setDarkMode] = useState(false)
+  const [activityLog, setActivityLog] = useState([])
 
   // Load items from localStorage (demo mode)
   useEffect(() => {
     const saved = localStorage.getItem('warehouseItems')
+    const savedLog = localStorage.getItem('activityLog')
     if (saved) {
       setItems(JSON.parse(saved))
       setFilteredItems(JSON.parse(saved))
+    }
+    if (savedLog) {
+      setActivityLog(JSON.parse(savedLog))
     }
   }, [])
 
@@ -29,6 +39,47 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('warehouseItems', JSON.stringify(items))
   }, [items])
+
+  // Save activity log to localStorage
+  useEffect(() => {
+    localStorage.setItem('activityLog', JSON.stringify(activityLog))
+  }, [activityLog])
+
+  // Load dark mode preference
+  useEffect(() => {
+    const savedDarkMode = localStorage.getItem('darkMode') === 'true'
+    setDarkMode(savedDarkMode)
+    if (savedDarkMode) {
+      document.body.classList.add('dark-mode')
+    }
+  }, [])
+
+  // Toggle dark mode
+  const toggleDarkMode = () => {
+    const newDarkMode = !darkMode
+    setDarkMode(newDarkMode)
+    localStorage.setItem('darkMode', newDarkMode)
+    if (newDarkMode) {
+      document.body.classList.add('dark-mode')
+    } else {
+      document.body.classList.remove('dark-mode')
+    }
+  }
+
+  // Add activity log entry
+  const logActivity = (type, itemName, itemData = {}) => {
+    const entry = {
+      type,
+      itemName,
+      sku: itemData.sku,
+      quantity: itemData.quantity,
+      category: itemData.category,
+      description: itemData.description,
+      timestamp: new Date().toISOString(),
+      details: itemData.details
+    }
+    setActivityLog([entry, ...activityLog])
+  }
 
   const handleScan = async (barcode) => {
     setLoading(true)
@@ -73,8 +124,10 @@ export default function App() {
     let updatedItems
     if (editingItem) {
       updatedItems = items.map(item => item.id === editingItem.id ? { ...formData, id: item.id, createdAt: item.createdAt } : item)
+      logActivity('edit', formData.name, formData)
     } else {
       updatedItems = [...items, { ...formData, id: Date.now(), createdAt: new Date().toISOString() }]
+      logActivity('add', formData.name, formData)
     }
     setItems(updatedItems)
     setFilteredItems(updatedItems)
@@ -90,9 +143,13 @@ export default function App() {
 
   const handleDeleteItem = (id) => {
     if (confirm('Are you sure you want to delete this item?')) {
+      const deletedItem = items.find(item => item.id === id)
       const updatedItems = items.filter(item => item.id !== id)
       setItems(updatedItems)
       setFilteredItems(updatedItems)
+      if (deletedItem) {
+        logActivity('delete', deletedItem.name, { sku: deletedItem.sku })
+      }
     }
   }
 
@@ -100,14 +157,72 @@ export default function App() {
     <div className="app">
       <header className="app-header">
         <div className="container">
-          <h1>📦 Warehouse Racking System</h1>
-          <p>Professional Inventory Management & Tracking</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+            <div>
+              <h1>🏭 Oxford Warehouse Racking</h1>
+              <p>Professional Inventory Management & Tracking System</p>
+            </div>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <button 
+                onClick={() => setShowDashboard(!showDashboard)}
+                className="btn btn-header"
+                title="View Dashboard"
+                style={{ background: showDashboard ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.15)' }}
+              >
+                <BarChart3 size={20} />
+              </button>
+              <button 
+                onClick={() => setShowActivityLog(!showActivityLog)}
+                className="btn btn-header"
+                title="View Activity Log"
+                style={{ background: showActivityLog ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.15)' }}
+              >
+                📋
+              </button>
+              <button 
+                onClick={toggleDarkMode}
+                className="btn btn-header"
+                title={darkMode ? 'Light Mode' : 'Dark Mode'}
+              >
+                {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
+            </div>
+          </div>
         </div>
       </header>
 
       <main className="app-main">
         <div className="container">
-          {showBackOffice ? (
+          {showDashboard ? (
+            <div style={{ marginBottom: '2rem' }}>
+              <button 
+                onClick={() => setShowDashboard(false)}
+                className="btn btn-secondary"
+                style={{ marginBottom: '1.5rem' }}
+              >
+                ← Back to Inventory
+              </button>
+              <Dashboard items={items} />
+            </div>
+          ) : showActivityLog ? (
+            <div style={{ marginBottom: '2rem' }}>
+              <button 
+                onClick={() => setShowActivityLog(false)}
+                className="btn btn-secondary"
+                style={{ marginBottom: '1.5rem' }}
+              >
+                ← Back to Inventory
+              </button>
+              <ActivityLog 
+                activityLog={activityLog}
+                onClearLog={() => {
+                  if (confirm('Clear all activity history?')) {
+                    setActivityLog([])
+                  }
+                }}
+              />
+            </div>
+          ) : showBackOffice ? (
             <BackOffice 
               items={items}
               onEdit={(item) => {
