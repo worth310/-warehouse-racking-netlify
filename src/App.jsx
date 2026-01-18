@@ -7,12 +7,14 @@ import ItemForm from './components/ItemForm'
 import BackOffice from './components/BackOffice'
 import Dashboard from './components/Dashboard'
 import ActivityLog from './components/ActivityLog'
+import Login from './components/Login'
 import './App.css'
 
 export default function App() {
   const [items, setItems] = useState([])
   const [filteredItems, setFilteredItems] = useState([])
   const [showForm, setShowForm] = useState(false)
+  const [currentUser, setCurrentUser] = useState(null)
   const [showBackOffice, setShowBackOffice] = useState(false)
   const [showDashboard, setShowDashboard] = useState(false)
   const [showActivityLog, setShowActivityLog] = useState(false)
@@ -76,9 +78,24 @@ export default function App() {
       category: itemData.category,
       description: itemData.description,
       timestamp: new Date().toISOString(),
-      details: itemData.details
+      details: itemData.details,
+      user: currentUser?.username || 'Unknown'
     }
     setActivityLog([entry, ...activityLog])
+  }
+
+  const handleLoginSuccess = (user) => {
+    setCurrentUser(user)
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('currentUser')
+    setCurrentUser(null)
+  }
+
+  // If not logged in, show login screen
+  if (!currentUser) {
+    return <Login onLoginSuccess={handleLoginSuccess} />
   }
 
   const handleScan = async (barcode) => {
@@ -163,6 +180,9 @@ export default function App() {
               <p>Professional Inventory Management & Tracking System</p>
             </div>
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ color: 'white', fontWeight: 600, fontSize: '0.9rem' }}>👤 {currentUser.username}</span>
+              </div>
               <button 
                 onClick={() => setShowDashboard(!showDashboard)}
                 className="btn btn-header"
@@ -185,6 +205,13 @@ export default function App() {
                 title={darkMode ? 'Light Mode' : 'Dark Mode'}
               >
                 {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
+              <button 
+                onClick={handleLogout}
+                className="btn btn-header"
+                title="Logout"
+              >
+                🚪
               </button>
             </div>
           </div>
